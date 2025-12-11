@@ -44,3 +44,11 @@ application-local.yml
 ### Logs ###
 logs/
 *.log
+
+### SSL Certificates ###
+src/main/resources/ssl/
+*.p12
+*.jks
+*.pem
+*.crt
+*.key
