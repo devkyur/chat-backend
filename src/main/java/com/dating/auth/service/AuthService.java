@@ -6,6 +6,8 @@ import com.dating.auth.dto.TokenResponse;
 import com.dating.common.exception.BusinessException;
 import com.dating.common.exception.ErrorCode;
 import com.dating.common.security.JwtTokenProvider;
+import com.dating.profile.domain.Profile;
+import com.dating.profile.repository.ProfileRepository;
 import com.dating.user.domain.User;
 import com.dating.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final ProfileRepository profileRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final RedisTemplate<String, Object> redisTemplate;
@@ -43,6 +46,7 @@ public class AuthService {
         String encodedPassword = passwordEncoder.encode(request.getPassword());
         log.debug(">>> Password encoded - length: {}", encodedPassword.length());
 
+        // User 생성
         User user = User.builder()
                 .email(request.getEmail())
                 .password(encodedPassword)
@@ -52,6 +56,33 @@ public class AuthService {
 
         User savedUser = userRepository.save(user);
         log.info(">>> User saved to DB - id: {}, email: {}", savedUser.getId(), savedUser.getEmail());
+
+        // Profile 생성
+        Profile profile = Profile.builder()
+                .user(savedUser)
+                .nickname(request.getNickname())
+                .birthDate(request.getBirthDate())
+                .gender(request.getGender())
+                .bio(request.getBio())
+                .location(request.getLocation())
+                .build();
+
+        Profile savedProfile = profileRepository.save(profile);
+        log.info(">>> Profile saved to DB - id: {}, nickname: {}", savedProfile.getId(), savedProfile.getNickname());
+
+        // 매칭 선호도 설정 (입력된 경우)
+        if (request.getMinAgePreference() != null || request.getMaxAgePreference() != null || request.getMaxDistance() != null) {
+            savedProfile.updateProfile(
+                    null, // nickname
+                    null, // bio
+                    null, // location
+                    request.getMinAgePreference(),
+                    request.getMaxAgePreference(),
+                    request.getMaxDistance()
+            );
+            log.info(">>> Matching preferences set - minAge: {}, maxAge: {}, maxDistance: {}",
+                    request.getMinAgePreference(), request.getMaxAgePreference(), request.getMaxDistance());
+        }
 
         return generateTokens(savedUser.getId());
     }
