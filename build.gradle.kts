@@ -57,6 +57,9 @@ dependencies {
     // AWS SDK for Cloudflare R2 (S3 compatible)
     implementation("software.amazon.awssdk:s3:2.21.0")
 
+    // Swagger/OpenAPI
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0")
+
     // Test
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.security:spring-security-test")
